@@ -38,7 +38,7 @@ export default function LoginPage() {
 
             dispatch(setCredentials({ user: data.user, token: data.token }));
 
-            router.push("/");
+            router.push("/chat");
         } catch (err: any) {
             setError(err.message);
         } finally {

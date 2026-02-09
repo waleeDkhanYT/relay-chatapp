@@ -3,18 +3,22 @@
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setActiveConversation, setConversations } from "@/redux/features/chatSlice";
+import { openProfileModal } from "@/redux/features/uiSlice";
 import { MessageSquare, Users, Plus } from "lucide-react";
 import Button from "@/components/ui/Button";
 import GroupChatModal from "./GroupChatModal";
+import { formatDistanceToNow } from "date-fns";
 
 export default function ChatList() {
     const dispatch = useAppDispatch();
-    const { conversations, activeConversationId } = useAppSelector((state) => state.chat);
+    const { conversations, activeConversationId, unreadCounts } = useAppSelector((state) => state.chat);
     const currentUser = useAppSelector((state) => state.auth.user);
+    const [isLoading, setIsLoading] = useState(true);
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
     useEffect(() => {
         if (currentUser?.id) {
+            setIsLoading(true);
             fetch(`/api/chats?userId=${currentUser.id}`)
                 .then(res => res.json())
                 .then(data => {
@@ -22,9 +26,26 @@ export default function ChatList() {
                         dispatch(setConversations(data));
                     }
                 })
-                .catch(err => console.error("Failed to fetch chats", err));
+                .catch(err => console.error("Failed to fetch chats", err))
+                .finally(() => setIsLoading(false));
         }
     }, [currentUser, dispatch]);
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col h-full animate-pulse p-4 gap-4">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-3 items-center">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                        <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )
+    }
 
     if (conversations.length === 0) {
         return (
@@ -55,6 +76,7 @@ export default function ChatList() {
                     const otherMember = chat.members.find(m => m.user.id !== currentUser?.id)?.user;
                     const chatName = isGroup ? chat.name : otherMember?.username || "Unknown User";
                     const isActive = chat.id === activeConversationId;
+                    const unreadCount = unreadCounts[chat.id] || 0;
 
                     // Safety check for name
                     const displayName = chatName || "Unknown";
@@ -64,18 +86,34 @@ export default function ChatList() {
                         <button
                             key={chat.id}
                             onClick={() => dispatch(setActiveConversation(chat.id))}
-                            className={`flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left ${isActive ? "bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-500" : ""
+                            className={`flex items-center w-full gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left ${isActive ? "bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-500" : ""
                                 }`}
                         >
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isGroup ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                                {isGroup ? <Users size={20} /> : <span className="font-bold">{initial}</span>}
+                            <div className="relative group/avatar" onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isGroup && otherMember) {
+                                    dispatch(openProfileModal(otherMember.id));
+                                }
+                            }}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isGroup ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'} group-hover/avatar:ring-2 ring-blue-500 transition-all`}>
+                                    {isGroup ? <Users size={20} /> : <span className="font-bold">{initial}</span>}
+                                </div>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900">
+                                        {unreadCount}
+                                    </span>
+                                )}
                             </div>
                             <div className="flex-1 overflow-hidden">
                                 <div className="flex justify-between items-baseline">
                                     <span className="font-medium truncate">{displayName}</span>
-                                    <span className="text-xs text-gray-400">12:30 PM</span>
+                                    {chat.lastMessage && (
+                                        <span className="text-[10px] text-gray-400">
+                                            {formatDistanceToNow(new Date(chat.lastMessage.createdAt), { addSuffix: true })}
+                                        </span>
+                                    )}
                                 </div>
-                                <p className="text-sm text-gray-500 truncate">
+                                <p className={`text-sm truncate ${unreadCount > 0 ? 'text-gray-900 dark:text-gray-100 font-semibold' : 'text-gray-500'}`}>
                                     {chat.lastMessage?.content || "No messages yet"}
                                 </p>
                             </div>

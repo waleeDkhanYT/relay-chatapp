@@ -11,6 +11,8 @@ model User {
   email     String   @unique
   password  String
   username  String
+  fullName  String?
+  age       Int?
   avatar    String?
   createdAt DateTime @default(now())
 
@@ -40,6 +42,7 @@ model Conversation {
   type      ConversationType
   name      String?  // For group chats
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   messages  Message[]
   members   ConversationMember[]
