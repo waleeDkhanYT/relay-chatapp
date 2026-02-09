@@ -4,6 +4,8 @@ interface User {
     id: string
     email: string
     username: string
+    fullName: string | null
+    age: number | null
     avatar: string | null
 }
 

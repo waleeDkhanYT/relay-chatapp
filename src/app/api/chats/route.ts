@@ -30,7 +30,7 @@ export async function GET(req: Request) {
                     take: 1
                 }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { updatedAt: 'desc' }
         })
 
         // Format to include lastMessage flattened
