@@ -7,6 +7,7 @@ interface User {
     fullName: string | null
     age: number | null
     avatar: string | null
+    createdAt: string
 }
 
 interface AuthState {

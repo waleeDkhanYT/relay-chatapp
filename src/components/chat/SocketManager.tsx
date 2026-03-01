@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { socket } from "@/lib/socket";
 import { useAppSelector, useAppDispatch } from "@/redux/hooks";
-import { addMessage } from "@/redux/features/chatSlice";
+import { addMessage, markMessagesAsRead, messageDeleted } from "@/redux/features/chatSlice";
 
 export default function SocketManager() {
     const dispatch = useAppDispatch();
@@ -25,24 +25,38 @@ export default function SocketManager() {
     }, [user]);
 
     useEffect(() => {
-        const handleMessage = async (msg: any) => {
-            // Check if we have this conversation in our list
-            const state = (window as any).__REDUX_STATE__?.chat; // Hacky or just use a ref for conversations
-            // Better: Just always dispatch addMessage, and in chatSlice we can't do much if it's missing.
-            // Let's use the dispatch result or just check the store.
-
-            // To be safe and clean, we'll fetch conversations if it's a brand new one
+        const handleMessage = (msg: any) => {
             dispatch(addMessage(msg));
-
-            // If we're receiving a message, we might need to join the room if we haven't yet
-            // (e.g. new conversation created while we were online)
             socket.emit("join_room", msg.conversationId);
         };
 
+        const handleNewConversation = (data: { conversationId: string }) => {
+            console.log("📣 New conversation created, joining room:", data.conversationId);
+            socket.emit("join_room", data.conversationId);
+        };
+
+        const handleMessagesRead = (data: any) => {
+            dispatch(markMessagesAsRead(data));
+        };
+
+        const handleMessageDeleted = (data: any) => {
+            // For 'delete for everyone', userId doesn't really matter in reducer for that case
+            // For 'delete for me', it allows us to filter if strict
+            if (user) {
+                dispatch(messageDeleted({ ...data, userId: user.id }));
+            }
+        };
+
         socket.on("receive_message", handleMessage);
+        socket.on("new_conversation_created", handleNewConversation);
+        socket.on("messages_read", handleMessagesRead);
+        socket.on("message_deleted", handleMessageDeleted);
 
         return () => {
             socket.off("receive_message", handleMessage);
+            socket.off("new_conversation_created", handleNewConversation);
+            socket.off("messages_read", handleMessagesRead);
+            socket.off("message_deleted", handleMessageDeleted);
         };
     }, [dispatch, user]);
 

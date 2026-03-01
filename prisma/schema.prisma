@@ -67,6 +67,10 @@ model Message {
   conversationId String
   createdAt      DateTime @default(now())
 
+  readBy            String[] @default([])
+  isDeleted         Boolean  @default(false)
+  deletedForUserIds String[] @default([])
+
   sender         User @relation(fields: [senderId], references: [id])
   conversation   Conversation @relation(fields: [conversationId], references: [id])
 }
