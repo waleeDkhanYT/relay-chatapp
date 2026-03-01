@@ -86,6 +86,84 @@ app.prepare().then(() => {
             }
         });
 
+        socket.on('mark_read', async (data: { conversationId: string, userId: string }) => {
+            // Mark all unread messages in conv as read by user
+            try {
+                // Fetch unread messages
+                const unread = await prisma.message.findMany({
+                    where: {
+                        conversationId: data.conversationId,
+                        NOT: {
+                            readBy: { has: data.userId }
+                        }
+                    },
+                    select: { id: true }
+                });
+
+                if (unread.length > 0) {
+                    // In a loop for now (not efficient but works for MVP without raw SQL)
+                    await prisma.$transaction(
+                        unread.map(msg => prisma.message.update({
+                            where: { id: msg.id },
+                            data: {
+                                readBy: { push: data.userId }
+                            }
+                        }))
+                    );
+
+                    // Broadcast to room that messages were read
+                    socket.to(data.conversationId).emit('messages_read', {
+                        conversationId: data.conversationId,
+                        readerId: data.userId,
+                        messageIds: unread.map(m => m.id)
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Failed to mark messages read:', error);
+            }
+        });
+
+        socket.on('delete_message', async (data: { messageId: string, userId: string, deleteForEveryone: boolean, conversationId: string }) => {
+            try {
+                if (data.deleteForEveryone) {
+                    const msg = await prisma.message.findUnique({ where: { id: data.messageId } });
+                    if (msg && msg.senderId === data.userId) {
+                        await prisma.message.update({
+                            where: { id: data.messageId },
+                            data: { isDeleted: true }
+                        });
+                        // Notify everyone in the room
+                        io.to(data.conversationId).emit('message_deleted', {
+                            messageId: data.messageId,
+                            conversationId: data.conversationId,
+                            deleteForEveryone: true
+                        });
+                    }
+                } else {
+                    // Delete for me
+                    await prisma.message.update({
+                        where: { id: data.messageId },
+                        data: {
+                            deletedForUserIds: { push: data.userId }
+                        }
+                    });
+                    // Notify only the user socket(s)
+                    // If user has multiple tabs, we want to update all of them.
+                    // The user is joined to their own room usually, but here we can just target the socket or room.
+                    const userSocketId = onlineUsers.get(data.userId);
+                    if (userSocketId) {
+                        io.to(userSocketId).emit('message_deleted', {
+                            messageId: data.messageId,
+                            conversationId: data.conversationId,
+                            deleteForEveryone: false
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Failed to delete message:', error);
+            }
+        });
+
         socket.on('disconnect', () => {
             // Find user by socketId and remove
             for (const [userId, socketId] of onlineUsers.entries()) {

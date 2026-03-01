@@ -21,7 +21,7 @@ export async function GET(req: Request) {
                 members: {
                     include: {
                         user: {
-                            select: { id: true, username: true, avatar: true }
+                            select: { id: true, username: true, fullName: true, age: true, email: true, avatar: true, createdAt: true }
                         }
                     }
                 },
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
                 members: {
                     include: {
                         user: {
-                            select: { id: true, username: true, avatar: true }
+                            select: { id: true, username: true, fullName: true, age: true, email: true, avatar: true, createdAt: true }
                         }
                     }
                 }

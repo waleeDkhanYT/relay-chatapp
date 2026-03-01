@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { Users, Plus } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
 import { setActiveConversation, setConversations } from "@/redux/features/chatSlice";
 import { openProfileModal } from "@/redux/features/uiSlice";
-import { MessageSquare, Users, Plus } from "lucide-react";
 import Button from "@/components/ui/Button";
 import GroupChatModal from "./GroupChatModal";
-import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 
 export default function ChatList() {
     const dispatch = useAppDispatch();
@@ -74,7 +76,8 @@ export default function ChatList() {
                 {conversations.map((chat) => {
                     const isGroup = chat.type === "GROUP";
                     const otherMember = chat.members.find(m => m.user.id !== currentUser?.id)?.user;
-                    const chatName = isGroup ? chat.name : otherMember?.username || "Unknown User";
+                    const chatName = isGroup ? chat.name :
+                        otherMember?.fullName ? otherMember.fullName : otherMember?.username || "Unknown User";
                     const isActive = chat.id === activeConversationId;
                     const unreadCount = unreadCounts[chat.id] || 0;
 
@@ -95,8 +98,16 @@ export default function ChatList() {
                                     dispatch(openProfileModal(otherMember.id));
                                 }
                             }}>
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isGroup ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'} group-hover/avatar:ring-2 ring-blue-500 transition-all`}>
-                                    {isGroup ? <Users size={20} /> : <span className="font-bold">{initial}</span>}
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center 
+                                    ${isGroup ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}
+                                    group-hover/avatar:ring-2 ring-blue-500 transition-all`}>
+                                    {isGroup ? <Users size={20} /> :
+                                        otherMember?.avatar ?
+                                            <Image
+                                                src={otherMember?.avatar} alt={otherMember?.username}
+                                                className="object-cover rounded-full" fill sizes="40px"
+                                            />
+                                            : <span className="font-bold">{initial}</span>}
                                 </div>
                                 {unreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900">
@@ -114,7 +125,9 @@ export default function ChatList() {
                                     )}
                                 </div>
                                 <p className={`text-sm truncate ${unreadCount > 0 ? 'text-gray-900 dark:text-gray-100 font-semibold' : 'text-gray-500'}`}>
-                                    {chat.lastMessage?.content || "No messages yet"}
+                                    {chat?.messages[chat.messages.length - 1]?.isDeleted ?
+                                        "This message was deleted" : chat?.messages[chat.messages.length - 1]?.content
+                                        || "No messages yet"}
                                 </p>
                             </div>
                         </button>

@@ -32,7 +32,10 @@ export async function POST(req: Request) {
                 id: user.id,
                 email: user.email,
                 username: user.username,
+                fullName: user.fullName,
+                age: user.age,
                 avatar: user.avatar,
+                createdAt: user.createdAt.toISOString(),
             },
             token,
         })

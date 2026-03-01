@@ -24,8 +24,11 @@ export async function GET(req: Request) {
             select: {
                 id: true,
                 username: true,
+                fullName: true,
+                age: true,
                 email: true,
                 avatar: true,
+                createdAt: true,
             },
         })
 
