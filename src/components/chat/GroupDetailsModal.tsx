@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setConversations } from "@/redux/features/chatSlice";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { socket } from "@/lib/socket";
 
 interface GroupDetailsModalProps {
     isOpen: boolean;
@@ -97,6 +98,12 @@ export default function GroupDetailsModal({ isOpen, onClose, conversationId }: G
             if (res.ok) {
                 const updatedConversation = await res.json();
 
+                // Notify new members over socket to join the conversation room
+                socket.emit("join_new_conversation", {
+                    conversationId,
+                    memberIds: selectedUsers.map(u => u.id)
+                });
+
                 // Update local state
                 const updatedConversations = conversations.map(c =>
                     c.id === conversationId ? updatedConversation : c
@@ -117,7 +124,7 @@ export default function GroupDetailsModal({ isOpen, onClose, conversationId }: G
     if (!isOpen || !conversation) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -125,17 +132,17 @@ export default function GroupDetailsModal({ isOpen, onClose, conversationId }: G
                 className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col max-h-[85vh]"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 sticky top-0 z-10">
+                <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 sticky top-0 z-10">
                     <div>
-                        <h2 className="text-xl font-bold">{conversation.name || "Group Details"}</h2>
-                        <p className="text-sm text-gray-500">{conversation.members.length} members</p>
+                        <h2 className="text-lg sm:text-xl font-bold">{conversation.name || "Group Details"}</h2>
+                        <p className="text-xs sm:text-sm text-gray-500">{conversation.members.length} members</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
                     {/* Add Member Section */}
                     {isAdding ? (
                         <div className="space-y-4">

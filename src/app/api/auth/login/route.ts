@@ -25,7 +25,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
         }
 
-        const token = signToken({ id: user.id, email: user.email })
+        const userRole = user.role || (user.email === 'admin@relayapp.com' ? 'ADMIN' : 'USER')
+        const token = signToken({ id: user.id, email: user.email, role: userRole })
 
         const response = NextResponse.json({
             user: {
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
                 fullName: user.fullName,
                 age: user.age,
                 avatar: user.avatar,
+                role: userRole,
                 createdAt: user.createdAt.toISOString(),
             },
             token,

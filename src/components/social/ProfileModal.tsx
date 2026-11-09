@@ -127,27 +127,27 @@ export default function ProfileModal({ isOpen, onClose, userId }: ProfileModalPr
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm">
                 <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
+                    initial={{ scale: 0.95, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md overflow-hidden relative shadow-2xl border border-gray-100 dark:border-gray-800"
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden relative shadow-2xl border border-gray-100 dark:border-gray-800"
                 >
                     {/* Header */}
-                    <div className="p-6 pb-0 flex justify-between items-start">
+                    <div className="p-4 sm:p-6 pb-2 flex justify-between items-start shrink-0">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                                 {isOwnProfile ? (isEditing ? "Edit Profile" : "My Profile") : "User Profile"}
                             </h2>
-                            <p className="text-gray-500 text-sm">{profile?.username}</p>
+                            <p className="text-gray-500 text-xs sm:text-sm">@{profile?.username}</p>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                            <X size={20} className="text-gray-500" />
+                        <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+                            <X size={20} />
                         </button>
                     </div>
 
-                    <div className="p-6 space-y-6">
+                    <div className="p-4 sm:p-6 pt-2 space-y-5 overflow-y-auto flex-1">
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center py-12 gap-4 text-gray-400 animate-pulse">
                                 <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-800" />
