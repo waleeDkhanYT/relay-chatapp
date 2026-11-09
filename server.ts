@@ -5,14 +5,19 @@ import { Server } from 'socket.io'
 import { prisma } from './src/lib/prisma'
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = 'localhost'
-const port = 3000
+const hostname = process.env.HOSTNAME || '0.0.0.0'
+const port = parseInt(process.env.PORT || '3000', 10)
 const app = next({ dev, hostname, port })
 const handler = app.getRequestHandler()
 
 app.prepare().then(() => {
     const httpServer = createServer(handler)
-    const io = new Server(httpServer)
+    const io = new Server(httpServer, {
+        cors: {
+            origin: '*',
+            methods: ['GET', 'POST']
+        }
+    })
     const onlineUsers = new Map<string, string>() // userId -> socketId
 
     io.on('connection', (socket) => {
@@ -33,7 +38,7 @@ app.prepare().then(() => {
                     select: { id: true }
                 });
 
-                userConversations.forEach(conv => {
+                userConversations.forEach((conv: { id: string }) => {
                     socket.join(conv.id);
                     // console.log(`Socket ${socket.id} joined room ${conv.id}`);
                 });
@@ -48,7 +53,7 @@ app.prepare().then(() => {
 
         socket.on('join_new_conversation', (data: { conversationId: string, memberIds: string[] }) => {
             // Tell all online members of this new conversation to join the room
-            data.memberIds.forEach(userId => {
+            data.memberIds.forEach((userId: string) => {
                 const targetSocketId = onlineUsers.get(userId);
                 if (targetSocketId) {
                     io.to(targetSocketId).emit('new_conversation_created', { conversationId: data.conversationId });
@@ -56,7 +61,7 @@ app.prepare().then(() => {
             });
         });
 
-        socket.on('send_message', async (data) => {
+        socket.on('send_message', async (data: any) => {
             // data: { id, content, senderId, conversationId, createdAt, sender }
             console.log('📨 New message:', data.content, 'in', data.conversationId);
 
@@ -65,7 +70,7 @@ app.prepare().then(() => {
 
             // Save to DB and update conversation activity
             try {
-                const result = await prisma.$transaction([
+                await prisma.$transaction([
                     prisma.message.create({
                         data: {
                             id: data.id, // Use client-generated UUID
@@ -103,7 +108,7 @@ app.prepare().then(() => {
 
                 if (unread.length > 0) {
                     await prisma.$transaction(
-                        unread.map(msg => prisma.message.update({
+                        unread.map((msg: { id: string }) => prisma.message.update({
                             where: { id: msg.id },
                             data: {
                                 readBy: { push: data.userId }
@@ -115,7 +120,7 @@ app.prepare().then(() => {
                     io.to(data.conversationId).emit('messages_read', {
                         conversationId: data.conversationId,
                         readerId: data.userId,
-                        messageIds: unread.map(m => m.id)
+                        messageIds: unread.map((m: { id: string }) => m.id)
                     });
                 }
             } catch (error) {
@@ -148,8 +153,6 @@ app.prepare().then(() => {
                         }
                     });
                     // Notify only the user socket(s)
-                    // If user has multiple tabs, we want to update all of them.
-                    // The user is joined to their own room usually, but here we can just target the socket or room.
                     const userSocketId = onlineUsers.get(data.userId);
                     if (userSocketId) {
                         io.to(userSocketId).emit('message_deleted', {
@@ -181,7 +184,7 @@ app.prepare().then(() => {
             console.error(err)
             process.exit(1)
         })
-        .listen(port, () => {
+        .listen(port, '0.0.0.0', () => {
             console.log(`> Ready on http://${hostname}:${port}`)
         })
 })
