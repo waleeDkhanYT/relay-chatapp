@@ -89,10 +89,11 @@ app.prepare().then(() => {
         socket.on('mark_read', async (data: { conversationId: string, userId: string }) => {
             // Mark all unread messages in conv as read by user
             try {
-                // Fetch unread messages
+                // Fetch unread messages not sent by the reader
                 const unread = await prisma.message.findMany({
                     where: {
                         conversationId: data.conversationId,
+                        senderId: { not: data.userId },
                         NOT: {
                             readBy: { has: data.userId }
                         }
@@ -101,7 +102,6 @@ app.prepare().then(() => {
                 });
 
                 if (unread.length > 0) {
-                    // In a loop for now (not efficient but works for MVP without raw SQL)
                     await prisma.$transaction(
                         unread.map(msg => prisma.message.update({
                             where: { id: msg.id },
@@ -111,8 +111,8 @@ app.prepare().then(() => {
                         }))
                     );
 
-                    // Broadcast to room that messages were read
-                    socket.to(data.conversationId).emit('messages_read', {
+                    // Broadcast to everyone in the room that messages were read
+                    io.to(data.conversationId).emit('messages_read', {
                         conversationId: data.conversationId,
                         readerId: data.userId,
                         messageIds: unread.map(m => m.id)

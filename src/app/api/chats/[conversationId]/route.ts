@@ -3,9 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function PUT(
     req: Request,
-    { params }: { params: { conversationId: string } }
+    { params }: { params: Promise<{ conversationId: string }> }
 ) {
     try {
+        const { conversationId } = await params;
         const body = await req.json();
         const { memberIds } = body; // IDs to ADD
 
@@ -17,15 +18,14 @@ export async function PUT(
         await prisma.conversationMember.createMany({
             data: memberIds.map((id: string) => ({
                 userId: id,
-                conversationId: params.conversationId
+                conversationId
             })),
             skipDuplicates: true
         });
 
         // Fetch the updated conversation to return
-        // We need to return the full conversation object with members and users for the frontend to update state
         const conversation = await prisma.conversation.findUnique({
-            where: { id: params.conversationId },
+            where: { id: conversationId },
             include: {
                 members: {
                     include: {
@@ -45,7 +45,6 @@ export async function PUT(
             return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
         }
 
-        // Format to include lastMessage if needed (matching existing pattern)
         const formatted = {
             ...conversation,
             lastMessage: conversation.messages[0] || null

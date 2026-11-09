@@ -34,6 +34,14 @@ export default function LandingPage() {
               Get Started
             </Link>
           </div>
+          <div className="flex md:hidden items-center gap-2">
+            <Link href="/login" className="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              Sign In
+            </Link>
+            <Link href="/register" className={buttonVariants({ size: "sm", className: "rounded-full px-3.5 py-1 text-xs" })}>
+              Get Started
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -55,11 +63,11 @@ export default function LandingPage() {
               <Zap size={14} className="animate-bounce" />
               Revolutionizing Real-time Chat
             </div>
-            <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-[1.1] text-gray-900 dark:text-white">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tight leading-[1.1] text-gray-900 dark:text-white">
               Connect <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-purple-600">Instantly</span><br />
               Anywhere in the World.
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed px-4">
               Experience the next generation of communication. Seamless, secure, and lightning-fast real-time messaging designed for modern teams and individuals.
             </p>
           </motion.div>
@@ -68,12 +76,12 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4"
           >
-            <Link href="/register" className={buttonVariants({ className: "h-16 px-10 text-lg rounded-2xl shadow-2xl shadow-blue-500/25 flex items-center gap-3" })}>
+            <Link href="/register" className={buttonVariants({ className: "w-full sm:w-auto h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg rounded-2xl shadow-2xl shadow-blue-500/25 flex items-center justify-center gap-3" })}>
               Start Chatting Free <ArrowRight size={20} />
             </Link>
-            <Link href="/login" className={buttonVariants({ variant: "secondary", className: "h-16 px-10 text-lg rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800" })}>
+            <Link href="/login" className={buttonVariants({ variant: "secondary", className: "w-full sm:w-auto h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800" })}>
               Sign In
             </Link>
           </motion.div>

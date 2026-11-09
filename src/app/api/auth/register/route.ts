@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             },
         })
 
-        const token = signToken({ id: user.id, email: user.email })
+        const token = signToken({ id: user.id, email: user.email, role: user.role || 'USER' })
 
         const response = NextResponse.json({
             user: {
@@ -38,6 +38,7 @@ export async function POST(req: Request) {
                 fullName: user.fullName || null,
                 age: user.age || null,
                 avatar: user.avatar,
+                role: user.role || 'USER',
                 createdAt: user.createdAt.toISOString(),
             },
             token,

@@ -14,6 +14,7 @@ model User {
   fullName  String?
   age       Int?
   avatar    String?
+  role      String   @default("USER")
   createdAt DateTime @default(now())
 
   // Relations
@@ -31,8 +32,8 @@ model FriendRequest {
   status     RequestStatus @default(PENDING)
   createdAt  DateTime @default(now())
 
-  sender     User @relation("SentRequests", fields: [senderId], references: [id])
-  receiver   User @relation("ReceivedRequests", fields: [receiverId], references: [id])
+  sender     User @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
 }
@@ -54,8 +55,8 @@ model ConversationMember {
   userId         String
   joinedAt       DateTime @default(now())
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  user           User @relation(fields: [userId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
 }
@@ -71,8 +72,8 @@ model Message {
   isDeleted         Boolean  @default(false)
   deletedForUserIds String[] @default([])
 
-  sender         User @relation(fields: [senderId], references: [id])
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
 
 enum RequestStatus {
